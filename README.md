@@ -1,5 +1,5 @@
 # DeepSolar
-Nationwide houseshold-level solar panel identification with deep learning. We used Inception-v3 as the basic framework for image-level classification and developed greedy layerwise training for segmentation and localization.
+Nationwide houseshold-level solar panel identification with deep learning. We used [Inception-v3](https://arxiv.org/pdf/1512.00567.pdf) as the basic framework for image-level classification and developed greedy layerwise training for segmentation and localization.
 CNN model was developed with [TensorFlow](https://github.com/tensorflow). `slim` package is credited to Google. `train_classification.py` and `train_segmentation.py` were developed with reference to [inception](https://github.com/tensorflow/models/tree/master/inception).
 
 ### Usage Instructions:
