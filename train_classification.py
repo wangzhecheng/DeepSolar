@@ -1,3 +1,5 @@
+"""Train the inception-v3 model on Solar Panel Identification dataset."""
+
 from datetime import datetime
 import os.path
 import time
@@ -18,33 +20,34 @@ from inception.slim import slim
 FLAGS = tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string('ckpt_save_dir', 'ckpt/inception_classification',
-                           """Directory where to write event logs """
-                           """and checkpoint.""")
-tf.app.flags.DEFINE_string('data_dir', 'SPI_train',
-                           """Directory of training set""")
-tf.app.flags.DEFINE_integer('max_steps', 20000,
-                            """Number of batches to run.""")
+                           """Directory for saving model checkpoint. """)
 
-# Flags governing the hardware employed for running TensorFlow.
-tf.app.flags.DEFINE_integer('num_gpus', 1,
-                            """How many GPUs to use.""")
-tf.app.flags.DEFINE_boolean('log_device_placement', True,
-                            """Whether to log device placement.""")
+tf.app.flags.DEFINE_string('ckpt_restore_dir', 'ckpt/inception_classification',
+                           """Directory for restoring old model checkpoint. """)
 
-# Flags governing the type of training.
-tf.app.flags.DEFINE_boolean('fine_tune', True,
-                            """If set, randomly initialize the final layer """
-                            """of weights in order to train the network on a """
-                            """new task.""")
-
-tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', 'ckpt/pretrained_inception/model.ckpt-157585',
+tf.app.flags.DEFINE_string('pretrained_model_ckpt_path', 'ckpt/pretrained_inception/model.ckpt-157585',
                            """If specified, restore this pretrained model """
                            """before beginning any training.""")
 
+tf.app.flags.DEFINE_string('train_set_dir', 'SPI_train',
+                           """Directory of training set""")
+
+tf.app.flags.DEFINE_integer('max_steps', 200000,
+                            """Number of batches/steps to run.""")
+
+tf.app.flags.DEFINE_integer('num_gpus', 1,
+                            """How many GPUs to use.""")
+
+tf.app.flags.DEFINE_boolean('fine_tune', True,
+                            """If true, start from well-trained model on SPI dataset, else start from
+                            pretrained model on ImageNet""")
+
 tf.app.flags.DEFINE_float('initial_learning_rate', 0.001,
                           """Initial learning rate.""")
-tf.app.flags.DEFINE_float('num_epochs_per_decay', 3.0,
+
+tf.app.flags.DEFINE_float('num_epochs_per_decay', 5.0,
                           """Epochs after which learning rate decays.""")
+
 tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.5,
                           """Learning rate decay factor.""")
 
@@ -52,20 +55,16 @@ tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.5,
 BATCH_SIZE = 32
 IMAGE_SIZE = 299
 NUM_CLASSES = 2
-# training sample range
-RANGE = 30000
-# number of training samples
-TRAIN_SET_SIZE = 37500
+
 # Constants dictating the learning rate schedule.
 RMSPROP_DECAY = 0.9                # Decay term for RMSProp.
 RMSPROP_MOMENTUM = 0.9             # Momentum in RMSProp.
 RMSPROP_EPSILON = 0.1              # Epsilon term for RMSProp.
 
 def load_image(path):
-    # load image and prepocess, solar_panel is a bool: True if it is solar panel.
+    # load image and prepocess.
     rotate_angle_list = [0, 90, 180, 270]
     img = skimage.io.imread(path)
-    # resize to 100*100
     resized_img = skimage.transform.resize(img, (IMAGE_SIZE, IMAGE_SIZE))
     if resized_img.shape[2] != 3:
         resized_img = resized_img[:, :, 0:3]
@@ -73,81 +72,27 @@ def load_image(path):
     image = skimage.transform.rotate(resized_img, rotate_angle)
     return image
 
-def generate_train_set():
-    # load all train data and return a deque contains all images
-    # and corresponding labels.
-    image_path = []
-    # load negative data
-    data_dir_1 = os.path.join(FLAGS.data_dir, '0_1')
-    neg_num = 0
-    for i in xrange(1, RANGE):
-        f = os.path.join(data_dir_1, '%d.png' % i)
-        if not os.path.exists(f):
-            continue
-        image_path.append((f, [0]))
-        neg_num += 1
-    data_dir_2 = os.path.join(FLAGS.data_dir, 'old/0_2')
-    for i in xrange(1, RANGE):
-        f = os.path.join(data_dir_2, '%d.png' % i)
-        if not os.path.exists(f):
-            continue
-        image_path.append((f, [0]))
-        neg_num += 1
-    data_dir_3 = os.path.join(FLAGS.data_dir, 'old/0_4')
-    for i in xrange(1, RANGE):
-        f = os.path.join(data_dir_3, '%d.png' % i)
-        if not os.path.exists(f):
-            continue
-        image_path.append((f, [0]))
-        neg_num += 1
-    data_dir_4 = os.path.join(FLAGS.data_dir, 'old/0_5')
-    for i in xrange(1, RANGE):
-        f = os.path.join(data_dir_4, '%d.png' % i)
-        if not os.path.exists(f):
-            continue
-        image_path.append((f, [0]))
-        neg_num += 1
-    print(neg_num, " non-panel training images")
-
-    # load positive data
-    data_dir_5 = os.path.join(FLAGS.data_dir, '1')
-    pos_num = 0
-    for i in xrange(1, RANGE):
-        f = os.path.join(data_dir_5, '%d.png' % i)
-        if not os.path.exists(f):
-            continue
-        image_path.append((f, [1]))
-        pos_num += 1
-    data_dir_6 = os.path.join(FLAGS.data_dir, 'old/1')
-
-    for i in xrange(1, RANGE):
-        f = os.path.join(data_dir_6, '%d.png' % i)
-        if not os.path.exists(f):
-            continue
-        image_path.append((f, [1]))
-        pos_num += 1
-    print(pos_num, " panel training images")
-    # shuffle the collection
-    random.shuffle(image_path)
-    # build training set and validation set
-    train_set = image_path[0: TRAIN_SET_SIZE]
-    train_set = deque(train_set)
-    print("built a training set with size of ", train_set.__len__())
-    val_set = image_path[TRAIN_SET_SIZE: image_path.__len__()]
-    val_set = deque(val_set)
-    print("built a validation set with size of ", val_set.__len__())
-    return train_set, val_set
-
 def train():
-    train_set, val_set = generate_train_set()
+    # load train set list and transform it to queue.
+    try:
+        with open('train_set_list.pickle', 'r') as f:
+            train_set_list = pickle.load(f)
+    except:
+        raise EnvironmentError('Data list not existed. Please run generate_data_list.py first.')
+    random.shuffle(train_set_list)
+    train_set_queue = deque(train_set_list)
+    train_set_size = len(train_set_list)
+    del train_set_list
+    print ('Training set built. Size: '+str(train_set_size))
+
+    # build the tensorflow graph.
     with tf.Graph().as_default() as g:
-        # Create a variable to count the number of train() calls. This equals the
-        # number of batches processed * FLAGS.num_gpus.
+
         global_step = tf.get_variable(
             'global_step', [],
             initializer=tf.constant_initializer(0), trainable=False)
 
-        num_batches_per_epoch = TRAIN_SET_SIZE / BATCH_SIZE
+        num_batches_per_epoch = train_set_size / BATCH_SIZE
         decay_steps = int(num_batches_per_epoch * FLAGS.num_epochs_per_decay)
 
         # Decay the learning rate exponentially based on the number of steps.
@@ -168,7 +113,7 @@ def train():
         labels = tf.placeholder(tf.int32, shape=[BATCH_SIZE])
 
         logits = inception.inference(images, NUM_CLASSES, for_training=True,
-                                     restore_logits=False,
+                                     restore_logits=FLAGS.fine_tune,
                                      scope=None)
 
         inception.loss(logits, labels, batch_size=BATCH_SIZE)
@@ -227,7 +172,6 @@ def train():
                             batchnorm_updates_op)
 
         # Create a saver.
-
         saver = tf.train.Saver(tf.all_variables())
 
         # Build the summary operation from the last tower summaries.
@@ -238,27 +182,39 @@ def train():
 
         # open session and initialize
         sess = tf.Session(config=tf.ConfigProto(
-            log_device_placement=False))
+            log_device_placement=True))
         sess.run(init)
 
         # restore old checkpoint
-        variables_to_restore = tf.get_collection(
-            slim.variables.VARIABLES_TO_RESTORE)
-        restorer = tf.train.Saver(variables_to_restore)
-        restorer.restore(sess, FLAGS.pretrained_model_checkpoint_path)
-        print('%s: Pre-trained model restored from %s' %
-              (datetime.now(), FLAGS.pretrained_model_checkpoint_path))
+        if FLAGS.fine_tune:
+            checkpoint = tf.train.get_checkpoint_state(FLAGS.ckpt_restore_dir)
+            if checkpoint and checkpoint.model_checkpoint_path:
+                saver.restore(sess, checkpoint.model_checkpoint_path)
+                print("Successfully loaded:", checkpoint.model_checkpoint_path)
+            else:
+                print("Could not find old network weights")
+        else:
+            variables_to_restore = tf.get_collection(
+                slim.variables.VARIABLES_TO_RESTORE)
+            restorer = tf.train.Saver(variables_to_restore)
+            restorer.restore(sess, FLAGS.pretrained_model_checkpoint_path)
+            print('%s: Pre-trained model restored from %s' %
+                  (datetime.now(), FLAGS.pretrained_model_checkpoint_path))
 
         summary_writer = tf.summary.FileWriter(
-            FLAGS.train_dir,
+            FLAGS.ckpt_save_dir,
             graph_def=sess.graph.as_graph_def(add_shapes=True))
 
         step = 1
-        train_record = []
         while step <= FLAGS.max_steps:
             start_time = time.time()
             # construct image batch and label batch for one step train
-            minibatch = random.sample(train_set, BATCH_SIZE)
+            minibatch = []
+            for count in xrange(0, BATCH_SIZE):
+                element = train_set_queue.pop()
+                minibatch.append(element)
+                train_set_queue.appendleft(element)
+
             image_list = [load_image(d[0]) for d in minibatch]
             label_list = [d[1] for d in minibatch]
 
@@ -285,82 +241,22 @@ def train():
                 print(format_str % (datetime.now(), step, loss_value,
                                     examples_per_sec, sec_per_batch))
 
+            # shuttle the image list per epoch
+            if step % num_batches_per_epoch == 0:
+                random.shuffle(train_set_queue)
+
+            # write summary periodically
             if step == 1 or step % 100 == 0:
                 summary_str = sess.run(summary_op, feed_dict={images: image_batch, labels: label_batch})
                 summary_writer.add_summary(summary_str, step)
-                print label_batch
-                score = sess.run(logits, feed_dict={images: image_batch, labels: label_batch})
-                print score[0]
 
             # Save the model checkpoint periodically.
             if step % 1000 == 0:
-                checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+                checkpoint_path = os.path.join(FLAGS.ckpt_save_dir, 'model.ckpt')
                 saver.save(sess, checkpoint_path, global_step=step)
-
-            # Give training error and validation error every 400 steps
-            if step % 1000 == 0:
-                print("begin calculating training error at step ", step)
-                TP1 = TN1 = FP1 = FN1 = 0
-                for ii in xrange(0, 50):
-                    minibatch2 = random.sample(train_set, BATCH_SIZE)
-                    image_list2 = [load_image(d[0]) for d in minibatch2]
-                    label_list2 = [d[1] for d in minibatch2]
-                    image_batch2 = np.array(image_list2)
-                    label_batch2 = np.array(label_list2)
-                    image_batch2 = np.reshape(image_batch2, [BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3])
-                    label_batch2 = np.reshape(label_batch2, [BATCH_SIZE])
-                    score = sess.run(logits, feed_dict={images: image_batch2})
-                    for k in xrange(0, BATCH_SIZE):
-                        if label_batch2[k] == 1 and score[0][k, 1] >= 0:
-                            TP1 += 1
-                        elif label_batch2[k] == 1 and score[0][k, 1] < 0:
-                            FN1 += 1
-                        elif label_batch2[k] == 0 and score[0][k, 1] <= 0:
-                            TN1 += 1
-                        elif label_batch2[k] == 0 and score[0][k, 1] > 0:
-                            FP1 += 1
-                precision = float(TP1) / float(TP1 + FP1)
-                recall = float(TP1) / float(TP1 + FN1)
-                print("Training set: TP:", TP1, "TN:", TN1, "FP:", FP1, "FN:", FN1, "precision:", precision, "recall:",
-                      recall)
-                train_record.append(('train', step, TP1, TN1, FP1, FN1, precision, recall))
-
-                print("begin calculating validation error at step ", step)
-                TP2 = TN2 = FP2 = FN2 = 0
-                for ii in xrange(0, 50):
-                    minibatch3 = random.sample(val_set, BATCH_SIZE)
-                    image_list3 = [load_image(d[0]) for d in minibatch3]
-                    label_list3 = [d[1] for d in minibatch3]
-                    image_batch3 = np.array(image_list3)
-                    label_batch3 = np.array(label_list3)
-                    image_batch3 = np.reshape(image_batch3, [BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3])
-                    label_batch3 = np.reshape(label_batch3, [BATCH_SIZE])
-                    score = sess.run(logits, feed_dict={images: image_batch3})
-                    for k in xrange(0, BATCH_SIZE):
-                        if label_batch3[k] == 1 and score[0][k, 1] >= 0:
-                            TP2 += 1
-                        elif label_batch3[k] == 1 and score[0][k, 1] < 0:
-                            FN2 += 1
-                        elif label_batch3[k] == 0 and score[0][k, 1] <= 0:
-                            TN2 += 1
-                        elif label_batch3[k] == 0 and score[0][k, 1] > 0:
-                            FP2 += 1
-                precision2 = float(TP2) / float(TP2 + FP2)
-                recall2 = float(TP2) / float(TP2 + FN2)
-                print(
-                "Validation set: TP:", TP2, "TN:", TN2, "FP:", FP2, "FN:", FN2, "precision:", precision2, "recall:",
-                recall2)
-                train_record.append(('val', step, TP2, TN2, FP2, FN2, precision2, recall2))
-
-                with open("record.pickle", 'w') as f:
-                    pickle.dump(train_record, f)
 
             step += 1
 
 
-
 if __name__ == '__main__':
     train()
-
-
-

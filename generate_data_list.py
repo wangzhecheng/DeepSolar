@@ -1,6 +1,4 @@
-"""
-Generate lists containing filepaths and labels for training, validation and evaluation.
-"""
+""" Generate lists containing filepaths and labels for training, validation and evaluation. """
 import pickle
 import os.path
 import random
