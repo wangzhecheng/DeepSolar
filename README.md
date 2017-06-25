@@ -14,7 +14,7 @@ cd ckpt
 curl -O http://download.tensorflow.org/models/image/imagenet/inception-v3-2016-03-01.tar.gz
 tar xzf inception-v3-2016-03-01.tar.gz
 ```
-Then download pre-trained classification model and segmentation model.
+Then download pre-trained classification model and segmentation model for solar panel identification task.
 ```
 curl -0 https://s3-us-west-1.amazonaws.com/roofsolar/inception_classification.tar.gz
 tar xzf inception_classification.tar.gz
@@ -34,6 +34,10 @@ tar xzf SPI_eval.tar.gz
 Install the required packages:
 ```
 pip install -r requirements.txt
+```
+Firstly, you should generate data file path lists for training and evaluation:
+```
+python generate_data_list.py
 ```
 Then you can train the CNN model for classification. You can start from ImageNet model:
 ```
