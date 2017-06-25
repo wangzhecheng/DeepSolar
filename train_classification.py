@@ -25,7 +25,7 @@ tf.app.flags.DEFINE_string('ckpt_save_dir', 'ckpt/inception_classification',
 tf.app.flags.DEFINE_string('ckpt_restore_dir', 'ckpt/inception_classification',
                            """Directory for restoring old model checkpoint. """)
 
-tf.app.flags.DEFINE_string('pretrained_model_ckpt_path', 'ckpt/pretrained_inception/model.ckpt-157585',
+tf.app.flags.DEFINE_string('pretrained_model_ckpt_path', 'ckpt/inception-v3/model.ckpt-157585',
                            """If specified, restore this pretrained model """
                            """before beginning any training.""")
 
