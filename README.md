@@ -1,5 +1,5 @@
 # DeepSolar
-Nationwide houseshold-level solar panel identification with deep learning. We used [Inception-v3](https://arxiv.org/pdf/1512.00567.pdf) as the basic framework for image-level classification and developed greedy layerwise training for segmentation and localization.
+Nationwide houseshold-level solar panel identification with deep learning. See details from our [project website](http://web.stanford.edu/group/deepsolar/home). We used [Inception-v3](https://arxiv.org/pdf/1512.00567.pdf) as the basic framework for image-level classification and developed greedy layerwise training for segmentation and localization.
 CNN model was developed with [TensorFlow](https://github.com/tensorflow). `slim` package is credited to Google. `train_classification.py` and `train_segmentation.py` were developed with reference to [inception](https://github.com/tensorflow/models/tree/master/inception).
 
 ### Usage Instructions:
@@ -54,14 +54,14 @@ python test_classification.py
 Our model can achieved overall recall 88.9% and overall precision 93.2% on test set.
 For training the segmentation branch, you should firstly train the first layer:
 ```
-python train_segmentation --two_layers=False
+python train_segmentation.py --two_layers=False
 ```
 Then train the second layer.
 ```
-python train_segmentation --two_layers=True
+python train_segmentation.py --two_layers=True
 ```
 After training is done, you can test the average absolute area error rate:
 ```
-python test_segmentation
+python test_segmentation.py
 ```
 Our well-trained model can reach 27.3% for residential area and 18.8% for commercial area.
