@@ -16,19 +16,19 @@ tar xzf inception-v3-2016-03-01.tar.gz
 ```
 Then download pre-trained classification model and segmentation model for solar panel identification task.
 ```
-curl -0 https://s3-us-west-1.amazonaws.com/roofsolar/inception_classification.tar.gz
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/inception_classification.tar.gz
 tar xzf inception_classification.tar.gz
-curl -0 https://s3-us-west-1.amazonaws.com/roofsolar/inception_segmentation.tar.gz
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/inception_segmentation.tar.gz
 tar xzf inception_segmentation.tar.gz
 ```
 In this project, we developed a dataset containing 472,953 aerial images for training, validation and evaluation. They can be downloaded as follows:
 ```
 cd /abs/path/to/DeepSolar
-curl -0 https://s3-us-west-1.amazonaws.com/roofsolar/SPI_train.tar.gz
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/SPI_train.tar.gz
 tar xzf SPI_train.tar.gz
-curl -0 https://s3-us-west-1.amazonaws.com/roofsolar/SPI_val.tar.gz
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/SPI_val.tar.gz
 tar xzf SPI_val.tar.gz
-curl -0 https://s3-us-west-1.amazonaws.com/roofsolar/SPI_eval.tar.gz
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/SPI_eval.tar.gz
 tar xzf SPI_eval.tar.gz
 ```
 Install the required packages:
