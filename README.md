@@ -1,6 +1,6 @@
 # DeepSolar
 Nationwide houseshold-level solar panel identification with deep learning. See details from our [project website](http://web.stanford.edu/group/deepsolar/home). We used [Inception-v3](https://arxiv.org/pdf/1512.00567.pdf) as the basic framework for image-level classification and developed greedy layerwise training for segmentation and localization.
-CNN model was developed with [TensorFlow](https://github.com/tensorflow). `slim` package is credited to Google. `train_classification.py` and `train_segmentation.py` were developed with reference to [inception](https://github.com/tensorflow/models/tree/master/research/inception/inception). The inception library should be downloaded from this source. The model was developed with Python 2.7.
+CNN model was developed with [TensorFlow](https://github.com/tensorflow). `slim` package is credited to Google. `train_classification.py` and `train_segmentation.py` were developed with reference to [inception](https://github.com/tensorflow/models/tree/master/research/inception/inception). The inception library should be downloaded from [this source](https://github.com/tensorflow/models/tree/master/research/inception/inception). The model was developed with Python 2.7.
 
 ### Usage Instructions:
 ```
