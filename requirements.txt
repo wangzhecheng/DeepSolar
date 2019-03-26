@@ -1,4 +1,5 @@
-numpy
-tensorflow
-scikit-image
-matplotlib
+numpy==1.15.4
+tensorflow==1.12.0
+scikit-image==0.14.1
+matplotlib==2.2.3
+pandas==0.23.4
