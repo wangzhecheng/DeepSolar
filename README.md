@@ -27,7 +27,7 @@ Install the required packages:
 ```
 pip install -r requirements.txt
 ```
-Firstly, you should generate data file path lists for training and evaluation:
+Firstly, you should generate data file path lists for training and evaluation. Here is the example:
 ```
 python generate_data_list.py
 ```
