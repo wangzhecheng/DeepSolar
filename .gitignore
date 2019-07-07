@@ -1,0 +1,7 @@
+SPI_eval
+test_out*
+imgs/out*
+inception_classification/*
+results.csv
+*.DS_Store
+.vscode/*

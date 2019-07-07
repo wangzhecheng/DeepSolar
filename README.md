@@ -1,8 +1,19 @@
 # DeepSolar
 Nationwide houseshold-level solar panel identification with deep learning. See details from our [project website](http://web.stanford.edu/group/deepsolar/home). We used [Inception-v3](https://arxiv.org/pdf/1512.00567.pdf) as the basic framework for image-level classification and developed greedy layerwise training for segmentation and localization.
-CNN model was developed with [TensorFlow](https://github.com/tensorflow). `slim` package is credited to Google. `train_classification.py` and `train_segmentation.py` were developed with reference to [inception](https://github.com/tensorflow/models/tree/master/research/inception/inception). The inception library should be downloaded from [this source](https://github.com/tensorflow/models/tree/master/research/inception/inception). The model was developed with Python 2.7.
+CNN model was developed with [TensorFlow](https://github.com/tensorflow). `slim` package is credited to Google. `train_classification.py` and `train_segmentation.py` were developed with reference to [inception](https://github.com/tensorflow/models/tree/master/inception).
 
-### Usage Instructions:
+
+## Updated usage instructions for classification module
+
+Clone repo and then run
+```
+find . -name *.jpg | python2 test_classification.py results.csv
+```
+
+There is no need to download the trained model -- this is automatically downloaded from a storage bucket when you run the above script.
+
+
+### Old Usage Instructions:
 ```
 git clone https://github.com/wangzhecheng/DeepSolar.git
 cd DeepSolar
@@ -21,13 +32,21 @@ tar xzf inception_classification.tar.gz
 curl -O https://s3-us-west-1.amazonaws.com/roofsolar/inception_segmentation.tar.gz
 tar xzf inception_segmentation.tar.gz
 ```
-Because the restriction of data sources, we are sorry that we cannot make the training and test set publicly available currently.
-
+In this project, we developed a dataset containing 472,953 aerial images for training, validation and evaluation. They can be downloaded as follows:
+```
+cd /abs/path/to/DeepSolar
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/SPI_train.tar.gz
+tar xzf SPI_train.tar.gz
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/SPI_val.tar.gz
+tar xzf SPI_val.tar.gz
+curl -O https://s3-us-west-1.amazonaws.com/roofsolar/SPI_eval.tar.gz
+tar xzf SPI_eval.tar.gz
+```
 Install the required packages:
 ```
 pip install -r requirements.txt
 ```
-Firstly, you should generate data file path lists for training and evaluation. Here is the example:
+Firstly, you should generate data file path lists for training and evaluation:
 ```
 python generate_data_list.py
 ```

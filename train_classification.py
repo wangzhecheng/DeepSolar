@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 """Train the inception-v3 model on Solar Panel Identification dataset."""
+
 
 from datetime import datetime
 import os.path
@@ -14,7 +16,7 @@ import random
 import pickle
 from collections import deque
 
-from inception import inception_model as inception
+from inception import  inception_model as inception
 from inception.slim import slim
 
 FLAGS = tf.app.flags.FLAGS

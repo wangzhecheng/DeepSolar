@@ -1,7 +1,6 @@
+#!/usr/bin/env python
 """Generate Class Activation Map for positive samples in """
 import sys
-sys.path.append('/home/ubuntu/vgg_data/code')
-
 import copy
 import os.path
 import re
@@ -20,10 +19,10 @@ from inception.slim import slim
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('classification_ckpt_restore_dir', 'ckpt/inception_classification',
+tf.app.flags.DEFINE_string('classification_ckpt_restore_dir', 'inception_classification',
                            """ Directory for restoring parameters of classification model. """)
 
-tf.app.flags.DEFINE_string('segmentation_ckpt_restore_dir', 'ckpt/inception_segmentation',
+tf.app.flags.DEFINE_string('segmentation_ckpt_restore_dir', 'inception_segmentation',
                            """ Directory for restoring parameters of segmentation branch. """)
 
 tf.app.flags.DEFINE_string('eval_set_dir', 'SPI_eval',
@@ -55,7 +54,7 @@ def generate_eval_set():
     # load all train data and return a deque contains all images
     # and corresponding labels.
     try:
-        with open('test_set_list', 'r') as f:
+        with open('test_set_list.pickle', 'r') as f:
             eval_set_list = pickle.load(f)
         print('Eval set size: ' + str(len(eval_set_list)))
     except:
@@ -72,6 +71,7 @@ def test():
         img_placeholder = tf.placeholder(tf.float32, shape=[1, IMAGE_SIZE, IMAGE_SIZE, 3])
 
         logits, _, feature_map = inception.inference(img_placeholder, NUM_CLASSES)
+
 
         with tf.name_scope('conv_aux_1') as scope:
             kernel1 = tf.Variable(tf.truncated_normal([3, 3, 288, 512], dtype=tf.float32, stddev=1e-4), name='weights')

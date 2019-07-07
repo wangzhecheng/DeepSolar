@@ -25,16 +25,12 @@ from __future__ import division
 from __future__ import print_function
 
 import re
-import sys
 
 import tensorflow as tf
 
 from inception.slim import slim
 
 FLAGS = tf.app.flags.FLAGS
-
-# imblanced rate = alpha + 1 (loss penalty on minority class)
-ALPHA = 9
 
 # If a model is trained using multiple GPUs, prefix all Op names with tower_name
 # to differentiate the operations. Note that this prefix is removed from the
@@ -76,10 +72,6 @@ def inference(images, num_classes, for_training=False, restore_logits=True,
       # epsilon to prevent 0s in variance.
       'epsilon': 0.001,
   }
-  # prepocessing
-  images = tf.subtract(images, 0.5)
-  images = tf.multiply(images, 2.0)
-
   # Set weight_decay for weights in Conv and FC layers.
   with slim.arg_scope([slim.ops.conv2d, slim.ops.fc], weight_decay=0.00004):
     with slim.arg_scope([slim.ops.conv2d],
@@ -100,9 +92,7 @@ def inference(images, num_classes, for_training=False, restore_logits=True,
   # Grab the logits associated with the side head. Employed during training.
   auxiliary_logits = endpoints['aux_logits']
 
-  #return logits, auxiliary_logits
-  return logits, auxiliary_logits, endpoints['mixed_35x35x288b']
-
+  return logits, auxiliary_logits
 
 
 def loss(logits, labels, batch_size=None):
@@ -125,28 +115,21 @@ def loss(logits, labels, batch_size=None):
   # shape [FLAGS.batch_size, num_classes].
   sparse_labels = tf.reshape(labels, [batch_size, 1])
   indices = tf.reshape(tf.range(batch_size), [batch_size, 1])
-  concated = tf.concat(1, [indices, sparse_labels])
+  concated = tf.concat(axis=1, values=[indices, sparse_labels])
   num_classes = logits[0].get_shape()[-1].value
   dense_labels = tf.sparse_to_dense(concated,
                                     [batch_size, num_classes],
                                     1.0, 0.0)
-  # Construct penalty matrix
-  labels = tf.cast(labels, tf.int64)
-  alpha = tf.cast(ALPHA, tf.int64)
-  penalty_vector = tf.add(tf.multiply(alpha, labels), 1)
-  penalty_vector = tf.cast(penalty_vector, tf.float32) # [batch_size, 1]
 
   # Cross entropy loss for the main softmax prediction.
   slim.losses.cross_entropy_loss(logits[0],
                                  dense_labels,
-                                 penalty_vector=penalty_vector,
                                  label_smoothing=0.1,
                                  weight=1.0)
 
   # Cross entropy loss for the auxiliary softmax head.
   slim.losses.cross_entropy_loss(logits[1],
                                  dense_labels,
-                                 penalty_vector=penalty_vector,
                                  label_smoothing=0.1,
                                  weight=0.4,
                                  scope='aux_loss')
@@ -172,4 +155,3 @@ def _activation_summaries(endpoints):
   with tf.name_scope('summaries'):
     for act in endpoints.values():
       _activation_summary(act)
-
