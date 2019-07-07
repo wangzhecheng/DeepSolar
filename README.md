@@ -8,7 +8,7 @@ CNN model was developed with [TensorFlow](https://github.com/tensorflow). `slim`
 Clone repo, pip install requirements.txt and then run
 
 ```
-find . -name *.jpg | python2 test_classification.py results.csv
+find . -name *.jpg | python test_classification.py
 ```
 
 This will run inference on all jpg images in the directory and print out the probability that they have solar panels installed. There is no need to download the trained model -- this is automatically downloaded from a storage bucket when you run the above script.
