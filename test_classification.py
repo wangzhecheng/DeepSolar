@@ -5,30 +5,26 @@
 #   find . -name *.jpg | test_classification.py <out.csv>
 #
 
+from inception.slim import slim
+from inception import inception_model as inception
+from collections import deque
+import skimage.transform
+import skimage.io
+import skimage
+import tensorflow as tf
+import numpy as np
+import csv
+import pickle
+import time
+import re
 import sys
 import os
 import os.path
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-import re
-import time
-import pickle
-import csv
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-import numpy as np
-import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
-import skimage
-import skimage.io
-import skimage.transform
-import pickle
-from collections import deque
-
-from inception import inception_model as inception
-from inception.slim import slim
 
 FLAGS = tf.app.flags.FLAGS
-
-
 checkpoint_bucket = 'gs://solarweb/deepsolar/inception_classification'
 tf.app.flags.DEFINE_string('ckpt_dir', checkpoint_bucket,
                            "Directory for restoring trained model checkpoints.")
@@ -66,10 +62,6 @@ def main():
     if len(filelist) < BATCH_SIZE:
         BATCH_SIZE = len(filelist)
 
-    # out CSV
-    outfile = sys.argv[1]
-    csvwriter = csv.writer(open(outfile, "wb"))
-
     # build the tensorflow graph.
     with tf.Graph().as_default() as g:
         img_placeholder = tf.placeholder(
@@ -86,7 +78,7 @@ def main():
         with sess:
             if ckpt and ckpt.model_checkpoint_path:
                 # Restores from checkpoint
-                print('')
+                print('Restoring trained model from checkpoint')
                 saver.restore(sess, ckpt.model_checkpoint_path)
                 print('Checkpoint loaded')
             else:
@@ -108,10 +100,8 @@ def main():
                 pos_score = np.exp(
                     score[:, 1])/(np.exp(score[:, 1])+np.exp(score[:, 0]))
 
-                for i in xrange(BATCH_SIZE):
-
-                    print "Score %s : %f" % (files_batch[i], pos_score[i])
-                    csvwriter.writerow([files_batch[i], pos_score[i]])
+                for i in range(BATCH_SIZE):
+                    print("Score %s : %f" % (files_batch[i], pos_score[i]))
 
                 duration = time.time() - start_time
 
