@@ -106,6 +106,15 @@ def main():
                 duration = time.time() - start_time
 
                 print("Batch done Duration: " + str(duration))
+            try:
+                save_dir = './saved_models'
+                print('Saving model for deployment in directory {}'.format(save_dir))
+                tf.saved_model.simple_save(sess,
+                                           save_dir,
+                                           inputs={'image': img_placeholder},
+                                           outputs={'predictions': logits})
+            except Exception as e:
+                print('Failed to save model withe exception {}'.format(e))
 
 
 if __name__ == '__main__':
