@@ -108,17 +108,14 @@ def main():
 
                 print("Batch done Duration: " + str(duration))
             if SAVE_MODEL:
-                try:
-                    save_dir = './saved_models'
-                    print(
-                        'Saving model for deployment in directory {}'.format(save_dir))
-                    tf.saved_model.simple_save(sess,
-                                               save_dir,
-                                               inputs={
-                                                   'image': img_placeholder},
-                                               outputs={'predictions': logits})
-                except Exception as e:
-                    print('Failed to save model withe exception {}'.format(e))
+                save_dir = './saved_models'
+                print(
+                    'Saving model for deployment in directory {}'.format(save_dir))
+                tf.saved_model.simple_save(sess,
+                                           save_dir,
+                                           inputs={
+                                               'image': img_placeholder},
+                                           outputs={'predictions': logits})
 
 
 if __name__ == '__main__':
