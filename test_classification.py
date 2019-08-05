@@ -32,6 +32,7 @@ tf.app.flags.DEFINE_string('ckpt_dir', checkpoint_bucket,
 BATCH_SIZE = 1
 IMAGE_SIZE = 299
 NUM_CLASSES = 2
+SAVE_MODEL = True
 
 
 def load_image(path):
@@ -106,15 +107,18 @@ def main():
                 duration = time.time() - start_time
 
                 print("Batch done Duration: " + str(duration))
-            try:
-                save_dir = './saved_models'
-                print('Saving model for deployment in directory {}'.format(save_dir))
-                tf.saved_model.simple_save(sess,
-                                           save_dir,
-                                           inputs={'image': img_placeholder},
-                                           outputs={'predictions': logits})
-            except Exception as e:
-                print('Failed to save model withe exception {}'.format(e))
+            if SAVE_MODEL:
+                try:
+                    save_dir = './saved_models'
+                    print(
+                        'Saving model for deployment in directory {}'.format(save_dir))
+                    tf.saved_model.simple_save(sess,
+                                               save_dir,
+                                               inputs={
+                                                   'image': img_placeholder},
+                                               outputs={'predictions': logits})
+                except Exception as e:
+                    print('Failed to save model withe exception {}'.format(e))
 
 
 if __name__ == '__main__':
