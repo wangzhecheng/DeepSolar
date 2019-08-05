@@ -2,7 +2,7 @@
 #
 # Evaluate Inception-v3 model on test(eval) set.
 # Usage
-#   find . -name *.jpg | test_classification.py <out.csv>
+#   find . -name *.jpg | python test_classification.py <out.csv>
 #
 
 from inception.slim import slim
