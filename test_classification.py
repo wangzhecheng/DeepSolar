@@ -2,7 +2,7 @@
 #
 # Evaluate Inception-v3 model on test(eval) set.
 # Usage
-#   find . -name *.jpg | test_classification.py <out.csv>
+#   find . -name *.jpg | python test_classification.py <out.csv>
 #
 
 from inception.slim import slim
@@ -32,6 +32,7 @@ tf.app.flags.DEFINE_string('ckpt_dir', checkpoint_bucket,
 BATCH_SIZE = 1
 IMAGE_SIZE = 299
 NUM_CLASSES = 2
+SAVE_MODEL = True
 
 
 def load_image(path):
@@ -106,6 +107,15 @@ def main():
                 duration = time.time() - start_time
 
                 print("Batch done Duration: " + str(duration))
+            if SAVE_MODEL:
+                save_dir = './saved_models'
+                print(
+                    'Saving model for deployment in directory {}'.format(save_dir))
+                tf.saved_model.simple_save(sess,
+                                           save_dir,
+                                           inputs={
+                                               'image': img_placeholder},
+                                           outputs={'predictions': logits})
 
 
 if __name__ == '__main__':
