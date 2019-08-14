@@ -5,6 +5,16 @@
 #   python save_model.py
 #
 
+
+""""
+
+Saves the classification model in the tensorflow SavedModel format. 
+See https://www.tensorflow.org/guide/saved_model
+
+The graph is saved such that it expects an image of shape [299,299,3]
+consisting of uint8 values in the range [0,255]
+"""
+
 from inception import inception_model as inception
 import tensorflow as tf
 import os.path
@@ -25,10 +35,19 @@ def main():
 
     # build the tensorflow graph.
     with tf.Graph().as_default() as g:
+        input_shape = [IMAGE_SIZE, IMAGE_SIZE, 3]
+        final_shape = [1, IMAGE_SIZE, IMAGE_SIZE, 3]
         img_placeholder = tf.placeholder(
-            tf.float32, shape=[None, IMAGE_SIZE, IMAGE_SIZE, 3])
+            tf.uint8, shape=input_shape)
         print(img_placeholder.shape)
-        logits, _ = inception.inference(img_placeholder, NUM_CLASSES)
+        # reshape to add batch size dimension
+        img = tf.reshape(img_placeholder, final_shape)
+        # cast to float
+        img = tf.dtypes.cast(img, dtype=tf.float32)
+        # normalize input to values in range [0,1]
+        img = img / 255.0
+        print('Image shape {}'.format(img.shape))
+        logits, _ = inception.inference(img, NUM_CLASSES)
         saver = tf.train.Saver(tf.all_variables())
 
         ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_dir)

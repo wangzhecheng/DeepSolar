@@ -43,6 +43,11 @@ def load_image(path):
 
     dir, filename = os.path.split(path)
 
+    # skimage.transform actually divides by 255 to normalize input. Because we want our computational graph to
+    # expect unnormalized input (since it does the normalization) we multiply by 255 to get back floats in the range [0,255]
+    resized_img = resized_img*255
+    resized_img = resized_img.astype(np.uint8)
+
     return resized_img
 
 
@@ -64,16 +69,21 @@ def main():
 
     # build the tensorflow graph.
     with tf.Graph().as_default() as g:
+        input_shape = [IMAGE_SIZE, IMAGE_SIZE, 3]
+        final_shape = [1, IMAGE_SIZE, IMAGE_SIZE, 3]
         img_placeholder = tf.placeholder(
-            tf.float32, shape=[BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3])
+            tf.uint8, shape=input_shape)
         print(img_placeholder.shape)
-        new_size = [IMAGE_SIZE, IMAGE_SIZE]
-        img_placeholder = tf.image.resize_bilinear(img_placeholder, new_size)
-        logits, _ = inception.inference(img_placeholder, NUM_CLASSES)
+        # reshape to add batch size dimension
+        img = tf.reshape(img_placeholder, final_shape)
+        # cast to float
+        img = tf.dtypes.cast(img, dtype=tf.float32)
+        # normalize input to values in range [0,1]
+        img = img / 255.0
+        print('Image shape {}'.format(img.shape))
+        logits, _ = inception.inference(img, NUM_CLASSES)
         saver = tf.train.Saver(tf.all_variables())
-
         ckpt = tf.train.get_checkpoint_state(FLAGS.ckpt_dir)
-
         sess = tf.Session(config=tf.ConfigProto(
             log_device_placement=True))
 
@@ -94,7 +104,7 @@ def main():
                 image_batch = np.array(image_list)
                 print(image_batch.shape)
                 image_batch = np.reshape(
-                    image_batch, [BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3])
+                    image_batch, [IMAGE_SIZE, IMAGE_SIZE, 3])
 
                 score = sess.run(logits, feed_dict={
                                  img_placeholder: image_batch})
