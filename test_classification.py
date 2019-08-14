@@ -43,7 +43,6 @@ def load_image(path):
 
     dir, filename = os.path.split(path)
 
-    skimage.io.imsave("%s/out_%s" % (dir, filename), resized_img)
     return resized_img
 
 
@@ -68,6 +67,8 @@ def main():
         img_placeholder = tf.placeholder(
             tf.float32, shape=[BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, 3])
         print(img_placeholder.shape)
+        new_size = [IMAGE_SIZE, IMAGE_SIZE]
+        img_placeholder = tf.image.resize_bilinear(img_placeholder, new_size)
         logits, _ = inception.inference(img_placeholder, NUM_CLASSES)
         saver = tf.train.Saver(tf.all_variables())
 
